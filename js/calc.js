@@ -1,172 +1,122 @@
-// track whose turn it is
-let activePlayer = 'X';
-// store moves in an array
-let selectedSquares = [];
+// object used to track values
+const Calculator = {
+	// displays 0 on screen
+	display_value: '0',
+	// holds first operand for any expressions, set to null for now
+	first_operand: null,
+	// checks for a second operand
+	wait_second_operand: false,
+	// holds the operator, set to null for now
+	operator: null,
+};
 
-// function for placing an X or O
-function placeXOrO(squareIndex) {
-	// for fun, so you can see the program's choices if you want
-	console.log("your oppenent chose: " + squareIndex);
-
-	// if a square has been clicked on, it'll be added to `selectedSquares`
-	// first we check if the square just clicked is in `selectedSquares` already
-	if (!selectedSquares.some(element => element.includes(squareIndex))) {
-		// gets the square clicked
-		let select = document.getElementById(squareIndex);
-		// place an 'x' or 'o' depending on whose turn it is
-		if (activePlayer === 'X') {
-			select.style.backgroundImage = 'url("images/x.png")';
-		} else {
-			select.style.backgroundImage = 'url("images/o.png")';
-		}
-		// `squareNumber` and `activePlayer` are concatenated and added to `selectedSquares`
-		selectedSquares.push(squareIndex + activePlayer);
-		checkWinConditions(); // check for winner
-
-		// switch active player
-		if (activePlayer === 'X') {
-			activePlayer = 'O';
-		} else {
-			activePlayer = 'X';
-		}
-		// plays placement sound
-		audio('media/place.mp3');
-
-		if (activePlayer === 'O') {
-			disableClick(); // ensures player can't act during computer's turn
-			setTimeout(function () { computersTurn(); }, 1000);
-		}
-
-		return true;
-	}
-
-	// function picks a random square to place an 'O'
-	function computersTurn() {
-		let success = false;
-		let pickSquare;
-		while(!success) {
-			pickSquare = String(Math.floor(Math.random() * 9));
-				if (placeXOrO(pickSquare)) {
-				placeXOrO(pickSquare);
-				success = true;
-			}
-		}
+// modifies values each time a button is clicked
+function inputDigit(digit) {
+	const { display_value, wait_second_operand } = Calculator;
+	// this checks if wait_second_operand is true and set
+	// need to make display_value to `digit`
+	if (wait_second_operand === true) {
+		Calculator.display_value = digit;
+		Calculator.wait_second_operand = false;
+	} else {
+		// overwrites display_value if it's at 0
+		// otherwise we add to it
+		Calculator.display_value = display_value === '0' ? digit : display_value + digit;
 	}
 }
 
-/* // alt function?
-function computersTurn() {
-	let pickSquare = String(Math.floor(Math.random() * 9));
-	placeXOrO(pickSquare);
-} */
-
-function checkWinConditions() {
-		 if (arrayIncludes('0X', '1X', '2X')) { drawWinLine(50, 100, 558, 100); } 
-	else if (arrayIncludes('3X', '4X', '5X')) { drawWinLine(50, 304, 558, 304); }
-	else if (arrayIncludes('6X', '7X', '8X')) { drawWinLine(50, 508, 558, 508); }
-	else if (arrayIncludes('0X', '3X', '6X')) { drawWinLine(100, 50, 100, 558); }
-	else if (arrayIncludes('1X', '4X', '7X')) { drawWinLine(304, 50, 304, 558); }
-	else if (arrayIncludes('2X', '5X', '8X')) { drawWinLine(508, 50, 508, 558); }
-	else if (arrayIncludes('6X', '4X', '2X')) { drawWinLine(100, 508, 510, 90); }
-	else if (arrayIncludes('0X', '4X', '8X')) { drawWinLine(100, 100, 520, 520); }
-	else if (arrayIncludes('0O', '1O', '2O')) { drawWinLine(50, 100, 558, 100); }
-	else if (arrayIncludes('3O', '4O', '5O')) { drawWinLine(50, 304, 558, 304); }
-	else if (arrayIncludes('6O', '7O', '8O')) { drawWinLine(50, 508, 558, 508); }
-	else if (arrayIncludes('0O', '3O', '6O')) { drawWinLine(100, 50, 100, 558); }
-	else if (arrayIncludes('1O', '4O', '7O')) { drawWinLine(304, 50, 304, 558); }
-	else if (arrayIncludes('2O', '5O', '8O')) { drawWinLine(508, 50, 508, 558); }
-	else if (arrayIncludes('6O', '4O', '2O')) { drawWinLine(100, 508, 510, 90); }
-	else if (arrayIncludes('0O', '4O', '8O')) { drawWinLine(100, 100, 520, 520); }
-	// or, if the game is a tie:
-	else if (selectedSquares.length >= 9) {
-		audio('media/tie.mp3');
-		setTimeout(function () {resetGame(); }, 1000);
+// this section handles decimal points
+function inputDecimal(dot) {
+	// first if statement: 
+	// ensures that clicking the decimal button without adding more input will not affect the intended operation
+	if (Calculator.wait_second_operand === true) return;
+	// second if statement:
+	// if a dot is not already displayed, we add it
+	if (!Calculator.display_value.includes(dot)) {
+		Calculator.display_value += dot;
 	}
 }
 
-// checks the provided solutions in `checkWinConditions` against the contents of `selectedSquares`
-function arrayIncludes(squareA, squareB, squareC) {
-	const a = selectedSquares.includes(squareA);
-	const b = selectedSquares.includes(squareB);
-	const c = selectedSquares.includes(squareC);
-
-	if (a === true && b === true && c === true) {
-		return true;
-	}
-}
-
-// temporarily makes body element unclickable
-function disableClick() {
-	body.style.pointerEvents = 'none';
-	setTimeout(function() {body.style.pointerEvents = 'auto';}, 1000);
-}
-
-function audio(audioURL) {
-	let audio = new Audio(audioURL); // create new object, passing path as parameter
-	audio.play(); // play method plays audio
-}
-
-function drawWinLine(coordX1, coordY1, coordX2, coordY2) {
-	const canvas = document.getElementById('win-lines');
-	const c = canvas.getContext('2d');
-	let x1 = coordX1, y1 = coordY1, x2 = coordX2, y2 = coordY2, x = x1, y = y1;
-
-	function animateLineDrawing() {
-		const animationLoop = requestAnimationFrame(animateLineDrawing);
-		// clears recatangle from last loop iteration
-		c.clearRect(0, 0, 608, 608);
-		// starts a new path
-		c.beginPath();
-		// moves to starting point
-		c.moveTo(x1, y1);
-		// indicates end point
-		c.lineTo(x, y);
-		// sets width
-		c.lineWidth = 10;
-		// sets color
-		c.strokeStyle = 'rgba(70, 255, 33, .8)';
-		// draws using above parameters
-		c.stroke();
-
-		// checks if we've reached endpoint
-		if (x1 <= x2 && y1 <= y2) {
-			// adds 10 to previous end x point
-			if (x < x2) { x += 10; }
-			// adds 10 to previous end y point
-			if (y < y2) { y += 10; }
-			// cancels animation loop if it reaches the end points
-			if (x >= x2 && y >= y2) { cancelAnimationFrame(animationLoop); }
-		}
-		// following statement adds functionality for 6-4-2 win condition
-		if (x1 <= x2 && y1 >= y2) {
-			if (x < x2) { x += 10; }
-			if (y > y2) { y -= 10; }
-			if (x >= x2 && y <= y2) { cancelAnimationFrame(animationLoop); }
-		}
+// this section handles operators
+function handleOperator(nextOperator) {
+	const { first_operand, display_value, operator } = Calculator
+	// when an operator key is pressed:
+	// store number displayed in Calculator.first_operand
+	const valueOfInput = parseFloat(display_value);
+	// if `operator` already exists and wait_second_operand is true:
+	// updates the operator and exits the function
+	if (operator && Calculator.wait_second_operand) {
+		Calculator.operator = nextOperator;
+		return;
 	}
 
-	// clears canvas once line is drawn
-	function clear() {
-		const animationLoop = requestAnimationFrame(clear);
-		c.clearRect(0, 0, 608, 608);
-		cancelAnimationFrame(animationLoop);
+	if (first_operand == null) {
+		Calculator.first_operand = valueOfInput;
+	} else if (operator) { // checks if operator exists
+		const valueNow = first_operand || 0;
+		// if operator exists, operation is performed using Perform_Calculation object
+		let result = Perform_Calculation[operator](valueNow, valueOfInput);
+		// rounds out to 9 decimal places
+		result = Number(result).toFixed(9);
+		// removes any trailing zeroes
+		result = (result * 1).toString();
+		// displays result and adds result to first_operand
+		Calculator.display_value = parseFloat(result);
+		Calculator.first_operand = parseFloat(result);
 	}
-	// disables clicking while win sound is playing
-	disableClick();
-	// plays win sounds
-	audio('media/winGame.mp3');
-
-	animateLineDrawing();
-
-	setTimeout(function () { clear(); resetGame(); }, 1000);
+	Calculator.wait_second_operand = true;
+	Calculator.operator = nextOperator;
 }
 
-function resetGame() {
-	for (let i = 0; i < 9; i++) {
-		let square = document.getElementById(String(i));
-		// removes backgroundImage elements
-		square.style.backgroundImage = '';
-	}
-	// empties the array of unavailable options so we can start over
-	selectedSquares = [];
+const Perform_Calculation = {
+	'/': (first_operand, second_operand) => first_operand / second_operand,
+	'*': (first_operand, second_operand) => first_operand * second_operand,
+	'+': (first_operand, second_operand) => first_operand + second_operand,
+	'-': (first_operand, second_operand) => first_operand - second_operand,
+	'=': (first_operand, second_operand) => second_operand
+};
+
+function Calculator_Reset() {
+	Calculator.display_value = '0';
+	Calculator.first_operand = null;
+	Calculator.wait_second_operand = false;
+	Calculator.operator = null;
 }
+// updates the screen with the contents of display_value
+function updateDisplay() {
+	const display = document.querySelector('.calculator-screen');
+	display.value = Calculator.display_value;
+}
+
+updateDisplay();
+// this section monitors button clicks
+const keys = document.querySelector('.calculator-keys');
+keys.addEventListener('click', (event) => {
+	// `target` represents clicked element
+	const { target } = event;
+	// if clicked element is not a button, exit the function
+	if (!target.matches('button')) {
+		return;
+	}
+	// activates when you click an operator button
+	if (target.classList.contains('operator')) {
+		handleOperator(target.value);
+		updateDisplay();
+		return;
+	}
+	// activates when you click the decimal button
+	if (target.classList.contains('decimal')) {
+		inputDecimal(target.value);
+		updateDisplay();
+		return;
+	}
+	// clears display when you click 'AC' button
+	if (target.classList.contains('all-clear')) {
+		Calculator_Reset();
+		updateDisplay();
+		return;
+	}
+
+	inputDigit(target.value);
+	updateDisplay();
+})
