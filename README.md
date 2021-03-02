@@ -1,2 +1,2 @@
 # Calculator
- Calculator built to Tech Academy curriculum's specifications
+ A calculator built to curriculum specifications
